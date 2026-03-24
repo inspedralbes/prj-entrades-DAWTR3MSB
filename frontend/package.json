@@ -1,0 +1,20 @@
+{
+  "name": "dawtr3msb-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "latest",
+    "vue": "latest",
+    "vue-router": "latest",
+    "@pinia/nuxt": "^0.5.1",
+    "pinia": "^2.1.7",
+    "socket.io-client": "^4.7.5"
+  }
+}
