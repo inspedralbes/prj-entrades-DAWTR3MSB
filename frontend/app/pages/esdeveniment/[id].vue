@@ -1,19 +1,27 @@
 <template>
-  <div v-if="pending" class="loading">Carregant esdeveniment...</div>
-  <div v-else-if="error" class="error">No s'ha pogut carregar l'esdeveniment.</div>
-  <div v-else class="esdeveniment-page">
+  <div v-if="store.loading" class="loading">Carregant esdeveniment...</div>
+  <div v-else-if="store.error" class="error">
+    <p>{{ store.error }}</p>
+    <button @click="back" class="btn-primary">Tornar</button>
+  </div>
+  <div v-else-if="store.esdeveniment" class="esdeveniment-page">
     <div class="info-header">
-      <h1>{{ esdeveniment.nom }} - Selecció de seients</h1>
-      <p class="status">Socket: <span class="connected">Conectat</span></p>
+      <h1>{{ store.esdeveniment.nom }}</h1>
+      <p class="status">
+        Socket: <span :class="{ 'connected': store.socketConectat }">
+          {{ store.socketConectat ? 'Connectat' : 'Desconnectat' }}
+        </span>
+      </p>
     </div>
 
     <div class="stage">ESCENARI</div>
 
     <div class="seats-grid">
       <div 
-        v-for="seat in esdeveniment.seients" 
+        v-for="seat in store.seients" 
         :key="seat.id" 
         :class="['seat', seat.estat]"
+        @click="reservar(seat)"
         :title="'Fila ' + seat.fila + ' - Número ' + seat.numero"
       >
         {{ seat.numero }}
@@ -29,8 +37,55 @@
 </template>
 
 <script setup>
+import { useEventStore } from '@/stores/eventStore'
+
 const route = useRoute()
-const { data: esdeveniment, pending, error } = useFetch(`http://localhost:3001/api/esdeveniments/${route.params.id}`)
+const store = useEventStore()
+const { $socket } = useNuxtApp()
+
+// Carregar estat inicial
+const fetchEvent = async () => {
+  store.loading = true
+  const config = useRuntimeConfig()
+  const apiBase = config.public.apiBase || 'http://localhost:3001/api'
+  
+  try {
+    const data = await $fetch(`${apiBase}/esdeveniments/${route.params.id}`)
+    store.setEsdeveniment(data)
+    store.error = null
+  } catch (e) {
+    store.error = "Error de connexió amb el servidor."
+  } finally {
+    store.loading = false
+  }
+}
+
+onMounted(() => {
+  fetchEvent()
+
+  // Escoltar actualitzacions en temps real
+  $socket.on('connect', () => store.setSocketStatus(true))
+  $socket.on('disconnect', () => store.setSocketStatus(false))
+  
+  $socket.on('seient_actualitzat', ({ seientId, estat }) => {
+    store.updateSeient(seientId, estat)
+  })
+
+  $socket.on('error_concurrencia', ({ message }) => {
+    alert(message)
+  })
+})
+
+const reservar = (seat) => {
+  if (seat.estat !== 'lliure') return
+  
+  $socket.emit('reservar_seient', { 
+    seientId: seat.id, 
+    esdevenimentId: route.params.id 
+  })
+}
+
+const back = () => useRouter().push('/')
 </script>
 
 <style scoped>

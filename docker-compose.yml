@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mariadb:10.6
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dawtr3msb
+    ports:
+      - "3306:3306"
+    networks:
+      - tickets-net
+
+  api:
+    build:
+      context: ./backend-api
+    restart: always
+    volumes:
+      - ./backend-api:/app
+      - /app/vendor/ # Evita sobreescriure el vendor del contenidor amb el del host
+    environment:
+      DB_HOST: db
+      DB_DATABASE: dawtr3msb
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - tickets-net
+
+  socket:
+    build: ./backend-socket
+    restart: always
+    volumes:
+      - ./backend-socket:/app
+      - /app/node_modules/
+    environment:
+      PORT: 3001
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: dawtr3msb
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    networks:
+      - tickets-net
+
+  frontend:
+    build: ./frontend
+    restart: always
+    volumes:
+      - ./frontend:/app
+      - /app/.nuxt/
+      - /app/node_modules/
+    environment:
+      NUXT_PUBLIC_API_BASE: http://localhost:8000/api
+      API_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - tickets-net
+
+networks:
+  tickets-net:
+    driver: bridge
