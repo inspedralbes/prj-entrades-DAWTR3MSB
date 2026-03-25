@@ -1,19 +1,22 @@
 <template>
-  <div class="esdeveniment-page">
+  <div v-if="pending" class="loading">Carregant esdeveniment...</div>
+  <div v-else-if="error" class="error">No s'ha pogut carregar l'esdeveniment.</div>
+  <div v-else class="esdeveniment-page">
     <div class="info-header">
-      <h1>Concert TR3 Final - Selecció de seients</h1>
-      <p class="status">Socket: <span class="connected">Desconnectat (Dia 2)</span></p>
+      <h1>{{ esdeveniment.nom }} - Selecció de seients</h1>
+      <p class="status">Socket: <span class="connected">Conectat</span></p>
     </div>
 
     <div class="stage">ESCENARI</div>
 
     <div class="seats-grid">
       <div 
-        v-for="seat in 50" 
-        :key="seat" 
-        :class="['seat', getSeatStatus(seat)]"
+        v-for="seat in esdeveniment.seients" 
+        :key="seat.id" 
+        :class="['seat', seat.estat]"
+        :title="'Fila ' + seat.fila + ' - Número ' + seat.numero"
       >
-        {{ seat }}
+        {{ seat.numero }}
       </div>
     </div>
     
@@ -26,12 +29,8 @@
 </template>
 
 <script setup>
-// Mock estats per visualització de Dia 4
-const getSeatStatus = (seat) => {
-  if (seat % 5 === 0) return 'venut';
-  if (seat % 7 === 0) return 'reservat';
-  return 'lliure';
-};
+const route = useRoute()
+const { data: esdeveniment, pending, error } = useFetch(`http://localhost:3001/api/esdeveniments/${route.params.id}`)
 </script>
 
 <style scoped>

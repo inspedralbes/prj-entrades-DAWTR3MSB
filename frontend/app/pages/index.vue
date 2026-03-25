@@ -1,16 +1,22 @@
 <template>
   <div class="portada">
     <h1>Llistat d'Esdeveniments VIP</h1>
-    <div class="events-grid">
-      <div class="event-card">
-        <h3>Concert TR3 Final</h3>
-        <p>Data: 24 de Març de 2026</p>
-        <p>Recinte: Palau Sant Jordi</p>
-        <NuxtLink to="/esdeveniment/1" class="btn-primary">Comprar Entrades</NuxtLink>
+    <div v-if="pending">Carregant esdeveniments...</div>
+    <div v-else-if="error">Error al carregar les dades. Revisa que el backend i la BD estiguin actius.</div>
+    <div v-else class="events-grid">
+      <div v-for="event in esdeveniments" :key="event.id" class="event-card">
+        <h3>{{ event.nom }}</h3>
+        <p>Data: {{ new Date(event.data_hora).toLocaleDateString() }}</p>
+        <p>Recinte: {{ event.recinte }}</p>
+        <NuxtLink :to="'/esdeveniment/' + event.id" class="btn-primary">Comprar Entrades</NuxtLink>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+const { data: esdeveniments, pending, error } = useFetch('http://localhost:3001/api/esdeveniments')
+</script>
 
 <style scoped>
 .portada h1 {

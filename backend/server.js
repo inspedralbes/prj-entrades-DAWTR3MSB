@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const db = require('./db');
 
 const app = express();
 app.use(cors());
@@ -10,8 +11,33 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // Es canviarà en producció per seguretat
+    origin: '*',
     methods: ['GET', 'POST']
+  }
+});
+
+// --- Rutes API REST ---
+
+// Llistat d'esdeveniments (Per a la Portada - SSR)
+app.get('/api/esdeveniments', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM esdeveniments');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al carregar esdeveniments' });
+  }
+});
+
+// Detall d'un esdeveniment i els seus seients
+app.get('/api/esdeveniments/:id', async (req, res) => {
+  try {
+    const [[esdeveniment]] = await db.query('SELECT * FROM esdeveniments WHERE id = ?', [req.params.id]);
+    if (!esdeveniment) return res.status(404).json({ error: 'Esdeveniment no trobat' });
+
+    const [seients] = await db.query('SELECT * FROM seients WHERE esdeveniment_id = ?', [req.params.id]);
+    res.json({ ...esdeveniment, seients });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al carregar el detall de l esdeveniment' });
   }
 });
 
