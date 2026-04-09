@@ -10,11 +10,13 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "nuxt": "latest",
-    "vue": "latest",
-    "vue-router": "latest",
     "@pinia/nuxt": "^0.5.1",
+    "html2pdf.js": "^0.14.0",
+    "nuxt": "latest",
     "pinia": "^2.1.7",
-    "socket.io-client": "^4.7.5"
+    "qrcode.vue": "^3.8.1",
+    "socket.io-client": "^4.7.5",
+    "vue": "latest",
+    "vue-router": "latest"
   }
 }

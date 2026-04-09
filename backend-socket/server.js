@@ -16,30 +16,42 @@ const io = new Server(server, {
   }
 });
 
-// --- Dades de record (Mock) per si la BD no està llista ---
-const mockEsdeveniments = [
-  { id: 1, nom: 'Concert TR3 Final (Mock)', data_hora: new Date(), recinte: 'Palau Sant Jordi', descripcio: 'Funcionant en mode prova.' }
-];
-let mockSeients = Array.from({ length: 50 }, (_, i) => ({
-  id: i + 1, esdeveniment_id: 1, fila: Math.floor(i / 10) + 1, numero: i + 1, estat: 'lliure', preu: 45
-}));
-
-// --- Rutes API (Mínimes per a Socket health check) ---
+// --- Rutes API (Mínimes per a Socket health check i comunicació interna) ---
 app.get('/socket-status', (req, res) => {
   res.json({ status: 'Socket Server Online' });
 });
 
-// --- Lògica de Temps Real (Dia 6) ---
+// Endpoint per permetre que el backend Laravel (API) faci broadcast d'esdeveniments
+app.post('/internal/broadcast', (req, res) => {
+  const { event, data } = req.body;
+  if (event && data) {
+    io.emit(event, data);
+    return res.json({ success: true });
+  }
+  res.status(400).json({ error: 'Missing event or data' });
+});
+
+// --- Lògica de Temps Real (Dia 6-7) ---
 // Nota: Laravel porta l'API REST al port 8000. 
 // Aquest servidor Node només gestiona els WebSockets al port 3001.
 
 io.on('connection', (socket) => {
   console.log(`Usuari connectat: ${socket.id}`);
 
-  // Event: Un usuari vol reservar un seient
-  socket.on('reservar_seient', async ({ seientId, esdevenimentId }) => {
+  // Event: Un usuari vol reservar o alliberar un seient
+  socket.on('reservar_seient', async ({ seientId, esdevenimentId, estat }) => {
     try {
-      // 1. Verifiquem disponibilitat real a la BD
+      const targetEstat = estat || 'reservat';
+
+      if (targetEstat === 'disponible') {
+        // L'usuari vol deseleccionar el seient
+        await db.query('UPDATE seients SET estat = "disponible" WHERE id = ?', [seientId]);
+        console.log(`Seient ${seientId} alliberat per ${socket.id}`);
+        io.emit('seient_actualitzat', { seientId, estat: 'disponible' });
+        return;
+      }
+
+      // 1. Verifiquem disponibilitat real a la BD per reservar
       const [[seient]] = await db.query('SELECT * FROM seients WHERE id = ? AND estat = "disponible"', [seientId]);
 
       if (seient) {
@@ -63,7 +75,7 @@ io.on('connection', (socket) => {
         socket.emit('error_concurrencia', { message: 'Aquest seient ja no està disponible!' });
       }
     } catch (error) {
-      console.error('Error en reserva:', error);
+      console.error('Error en reserva/alliberament:', error);
     }
   });
 

@@ -22,6 +22,12 @@ services:
       DB_DATABASE: dawtr3msb
       DB_USERNAME: root
       DB_PASSWORD: root
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENCRYPTION: null
+      MAIL_FROM_ADDRESS: "entrades@huevostyle.com"
+      MAIL_FROM_NAME: "Entrades huevostyle"
     ports:
       - "8000:8000"
     depends_on:
@@ -62,6 +68,15 @@ services:
       - "3000:3000"
     depends_on:
       - api
+    networks:
+      - tickets-net
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: proyectotr3-mailhog-1
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
     networks:
       - tickets-net
 

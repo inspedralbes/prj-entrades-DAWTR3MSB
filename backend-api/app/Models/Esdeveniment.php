@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Esdeveniment extends Model
 {
-    protected $fillable = ['nom', 'data_hora', 'recinte', 'descripcio', 'aforament'];
+    protected $fillable = ['nom', 'data_hora', 'recinte', 'imatge_url', 'descripcio', 'aforament'];
 
     public function seients()
     {

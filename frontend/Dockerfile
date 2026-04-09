@@ -1,5 +1,5 @@
-# Dockerfile per al Frontend (Mode Desenvolupament)
-FROM node:22-alpine
+# Etapa 1: Build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -7,11 +7,20 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
-# Copiar el codi font
+# Copiar codi i generar build
 COPY . .
+RUN npm run build
 
-# Exposar el port de Nuxt
+# Etapa 2: Runtime
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copiar només el resultat de la build
+COPY --from=build /app/.output ./.output
+
+ENV NODE_ENV=production
 EXPOSE 3000
 
-# Executar en mode dev
-CMD ["npm", "run", "dev", "--", "--host"]
+# Executar el servidor Nitro (Nuxt 3)
+CMD ["node", ".output/server/index.mjs"]
