@@ -7,8 +7,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/entradas/backend-api/public/api',
-      apiBaseInternal: process.env.NUXT_PUBLIC_API_BASE_INTERNAL || 'http://api:8000/api'
+      apiBase: 'http://huevostyle.daw.inspedralbes.cat/entradas/backend-api/api',
+      apiBaseInternal: 'http://huevostyle.daw.inspedralbes.cat/entradas/backend-api/api'
     }
   }
 })
